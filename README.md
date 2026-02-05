@@ -9,8 +9,8 @@ A modern, professional attendance management system using AI-powered facial reco
 
 ## ✨ Features
 
-- **🔐 Secure Face Recognition** - AI-powered facial verification using dlib
-- **⚡ Real-time Processing** - Instant face matching with confidence scores
+- **🔐 Secure Face Recognition** - AI-powered facial verification using **Google MediaPipe**
+- **⚡ Real-time Processing** - Instant geometric face matching with robust position handling
 - **🎨 Premium UI/UX** - Glassmorphism design with smooth Framer Motion animations
 - **📱 Responsive Design** - Works seamlessly on desktop and mobile
 - **🌙 Modern Aesthetics** - Gradient backgrounds, floating particles, micro-interactions
@@ -21,7 +21,8 @@ A modern, professional attendance management system using AI-powered facial reco
 ### Backend
 - **Django 4.2** - Python web framework
 - **SQLite** - Database (easily upgradable to PostgreSQL)
-- **face_recognition** - Face detection and recognition
+- **Google MediaPipe** - High-fidelity face geometry & embedding generation
+- **SciPy** - Spatial distance calculation for matching
 - **OpenCV** - Image processing
 - **django-cors-headers** - Cross-origin resource sharing
 
@@ -174,9 +175,15 @@ FACE_MATCH_TOLERANCE=0.5
 ### Face Recognition Tolerance
 
 Adjust `FACE_MATCH_TOLERANCE` in `.env`:
-- Lower values (0.4) = Stricter matching
-- Higher values (0.6) = More lenient matching
-- Default: 0.5
+- Lower values (0.10) = Stricter matching
+- Higher values (0.30) = More lenient matching
+- Default: 0.20 (Optimized for MediaPipe)
+
+### Troubleshooting Dependencies
+If you encounter `AttributeError: module 'mediapipe' has no attribute 'solutions'`, it is a version conflict. Run:
+```bash
+pip install "protobuf<4"
+```
 
 ## 🏗️ Production Deployment
 
@@ -207,7 +214,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [face_recognition](https://github.com/ageitgey/face_recognition) - Face recognition library
+- [Google MediaPipe](https://developers.google.com/mediapipe) - Face detection and recognition engine
 - [Framer Motion](https://www.framer.com/motion/) - Animation library
 - [Vite](https://vitejs.dev/) - Frontend build tool
 
