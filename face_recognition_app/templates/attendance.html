@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mark Attendance</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        video, canvas, img {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+        .message-container {
+            margin: 20px 0;
+        }
+        .btn-capture, .btn-submit, .btn-back {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-back {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mark Attendance for {{ student.name }}</h1>
+        
+        <div class="debug-info">
+            <p>Student ID: {{ student.student_id }}</p>
+            <img src="{{ student.face_image.url }}" 
+                 alt="Registered Photo" 
+                 class="reference-photo">
+        </div>
+
+        {% if messages %}
+            <div class="message-container">
+                {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    {{ message }}
+                    {% if message.tags == 'error' %}
+                    <div class="debug-hint">(Check system logs for details)</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" id="attendanceForm" action="{% url 'attendance' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <video id="video" width="640" height="480" autoplay></video>
+            <button type="button" class="btn-capture" onclick="captureImage()">Capture Selfie</button>
+            <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+            <img id="photo" src="" alt="Captured Image" style="display:none;">
+            <button type="submit" class="btn-submit" style="display:none;" id="submitBtn">Submit Selfie</button>
+        </form>
+
+        <a href="{% url 'index' %}" class="btn-back">← Back to Home</a>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const photo = document.getElementById('photo');
+        const submitBtn = document.getElementById('submitBtn');
+        const context = canvas.getContext('2d');
+
+        // Access webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error('Error accessing webcam:', err);
+                alert('Could not access webcam. Please ensure it is connected and permissions are granted.');
+            });
+
+        function captureImage() {
+            // Draw the video frame to the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg');
+            
+            // Display the captured image
+            photo.src = dataURL;
+            photo.style.display = 'block';
+
+            // Enable the submit button
+            submitBtn.style.display = 'inline-block';
+
+            // Add the image data to the form as a hidden input
+            const form = document.getElementById('attendanceForm');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'image';
+            input.value = dataURL;
+            form.appendChild(input);
+        }
+
+        // Handle form submission
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch("{% url 'attendance' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    window.location.href = "{% url 'index' %}";
+                } else {
+                    alert(data.error);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('An error occurred while submitting the selfie.');
+            });
+        });
+    </script>
+</body>
+</html>
